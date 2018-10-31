@@ -5,15 +5,15 @@ class Board
 
   def initialize
     @pieces = []
-    black_row = [Rook.new([0,0], :black), Knight.new([0,1], :black), Bishop.new([0,2], :black), King.new([0,3], :black)]
-    black_row += [Queen.new([0,4], :black), Bishop.new([0,5], :black), Knight.new([0,6], :black), Rook.new([0,7], :black)]
+    black_row = [Rook.new([0,0], :black, self), Knight.new([0,1], :black, self), Bishop.new([0,2], :black, self), Queen.new([0,3], :black, self)]
+    black_row += [King.new([0,4], :black, self), Bishop.new([0,5], :black,self), Knight.new([0,6], :black, self), Rook.new([0,7], :black, self)]
     black_pawns = Array.new(8)
-    (0..7).each { |i| black_pawns[i] = Pawn.new([1, i], :black) }
-    empty_rows = Array.new(4, Array.new(8, NullPiece.instance))
+    (0..7).each { |i| black_pawns[i] = Pawn.new([1, i], :black, self) }
+    empty_rows = Array.new(4) {Array.new(8, NullPiece.instance)}
     white_pawns = Array.new(8)
-    (0..7).each { |i| white_pawns[i] = Pawn.new([6, i], :white) }
-    white_row = [Rook.new([7,0], :white), Knight.new([7,1], :white), Bishop.new([7,2], :white), Queen.new([7,3], :white)]
-    white_row += [King.new([7,4], :white), Bishop.new([7,5], :white), Knight.new([7,6], :white), Rook.new([7,7], :white)]
+    (0..7).each { |i| white_pawns[i] = Pawn.new([6, i], :white, self) }
+    white_row = [Rook.new([7,0], :white, self), Knight.new([7,1], :white, self), Bishop.new([7,2], :white, self), King.new([7,3], :white, self)]
+    white_row += [Queen.new([7,4], :white, self), Bishop.new([7,5], :white, self), Knight.new([7,6], :white, self), Rook.new([7,7], :white, self)]
     @pieces << black_row
     @pieces << black_pawns
     @pieces += empty_rows
@@ -22,10 +22,10 @@ class Board
   end
 
   def move_piece(start_pos, end_pos)
-    raise "No piece at position." if self[start_pos] == nil
-    raise "End position is not a valid move." unless valid_moves(end_pos)
+    raise "No piece at position." if self[start_pos] == NullPiece.instance
+    # raise "End position is not a valid move." unless self[start_pos].valid_moves.include?(end_pos)
     self[end_pos] = self[start_pos]
-    self[start_pos] = nil
+    self[start_pos] = NullPiece.instance
   end
 
   def [](pos)
@@ -36,7 +36,7 @@ class Board
     @pieces[pos[0]][pos[1]] = value
   end
 
-  def self.valid_pos?(pos)
+  def valid_pos?(pos)
     pos[0].between?(0,7) && pos[1].between?(0,7)
   end
 
@@ -74,6 +74,20 @@ class Board
     in_check?(color) && player_pieces(color).all? {|piece| piece.valid_moves.empty?}
   end
 
+  def dup
+    dupped_board = Board.new
+    dupped_board.pieces = deep_dup(self.pieces, dupped_board)
+    dupped_board
+  end
 
+  def deep_dup(old_pieces, dupped_board)
+    old_pieces.map do |el|
+      if el.is_a?(Array)
+        deep_dup(el, dupped_board)
+      else
+        el.class == NullPiece ? NullPiece.instance : el.class.new(el.pos, el.color, dupped_board)
+      end
+    end
+  end
 
 end

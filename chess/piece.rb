@@ -5,18 +5,23 @@ class Piece
 
   attr_reader :color, :symbol, :pos
 
-  def initialize(pos = nil, color = nil)
+  def initialize(pos = nil, color = nil, board = nil)
+    @board = board
     @pos = pos
     @color = color
-    @symbol = nil
+    @symbol = " "
   end
 
   def valid_moves
-    moves.reject do |move|
-      duped_board = Board.dup
+    result = []
+    moves.each do |move|
+      duped_board = @board.dup
       duped_board.move_piece(@pos, move)
-      duped_board.in_check?(@color)
+      unless duped_board.in_check?(@color)
+        result << move
+      end
     end
+    result
   end
 
   def moves
@@ -31,10 +36,12 @@ module SlidingPiece
 
   def moves
     results = []
+    opposite_color = (@color == :black ? :white : :black)
     move_dirs.each do |dir|
       potential_pos = [@pos[0] + dir[0], @pos[1] + dir[1]]
-      while Board.valid_pos?(potential_pos)
+      while @board.valid_pos?(potential_pos) && @board[potential_pos].color != @color
         results << potential_pos
+        break if @board[potential_pos].color == opposite_color
         potential_pos = [potential_pos[0] + dir[0], potential_pos[1] + dir[1]]
       end
     end
@@ -49,7 +56,9 @@ module SteppingPiece
     results = []
     move_dirs.each do |dir|
       potential_pos = [@pos[0] + dir[0], @pos[1] + dir[1]]
-      results << potential_pos if Board.valid_pos?(potential_pos)
+      if @board.valid_pos?(potential_pos) && @board[potential_pos].color != @color
+        results << potential_pos
+      end
     end
 
     results
@@ -59,9 +68,9 @@ end
 class Bishop < Piece
   include SlidingPiece
 
-  def initialize(pos, color)
+  def initialize(pos, color, board)
     super
-    @symbol = :bishop
+    @symbol = :♝
   end
 
   def move_dirs
@@ -73,9 +82,9 @@ end
 class Rook < Piece
   include SlidingPiece
 
-  def initialize(pos, color)
+  def initialize(pos, color, board)
     super
-    @symbol = :rook
+    @symbol = :♜
   end
 
   def move_dirs
@@ -87,9 +96,9 @@ end
 class Queen < Piece
   include SlidingPiece
 
-  def initialize(pos, color)
+  def initialize(pos, color, board)
     super
-    @symbol = :queen
+    @symbol = :♛
   end
 
   def move_dirs
@@ -101,9 +110,9 @@ end
 class Knight < Piece
   include SteppingPiece
 
-  def initialize(pos, color)
+  def initialize(pos, color, board)
     super
-    @symbol = :knight
+    @symbol = :♞
   end
 
   def move_dirs
@@ -118,9 +127,9 @@ end
 class King < Piece
   include SteppingPiece
 
-  def initialize(pos, color)
+  def initialize(pos, color, board)
     super
-    @symbol = :king
+    @symbol = :♚
   end
 
   def move_dirs
@@ -130,9 +139,9 @@ end
 
 class Pawn < Piece
 
-  def initialize(pos, color)
+  def initialize(pos, color, board)
     super
-    @symbol = :pawn
+    @symbol = :♟
   end
 
   def moves

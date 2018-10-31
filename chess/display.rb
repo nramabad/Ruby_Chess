@@ -13,14 +13,17 @@ class Display
 
   def render
     @board.pieces.each_with_index do |row, i|
-      row.each_with_index do |col, j|
+      row.each_with_index do |piece, j|
+
         if [i, j] == @cursor.cursor_pos && @cursor.selected
-           print "col | ".colorize(:blue)
+          print " #{piece.symbol} ".colorize(:color => piece.color, :background => :blue)
         elsif [i, j] == @cursor.cursor_pos
-           print "col | ".colorize(:yellow)
+          print " #{piece.symbol} ".colorize(:color => piece.color, :background => :red)
+        elsif (i + j).even?
+          print " #{piece.symbol} ".colorize(:color => piece.color, :background => :yellow)
         else
-           print "col | "
-        end 
+          print " #{piece.symbol} ".colorize(:color => piece.color, :background => :light_black)
+        end
       end
       puts
     end
